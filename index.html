@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#8e24aa">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexDrop">
+    <title>NexDrop Video v9.7 Pro</title>
+
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/icon.svg">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: #121214; color: #fff; display: flex;
+               justify-content: center; min-height: 100vh; padding: 15px; }
+
+        .container { width: 100%; max-width: 480px; display: flex;
+                     flex-direction: column; align-items: center; gap: 18px; }
+
+        .header { display: flex; align-items: center; width: 100%; gap: 12px; margin-top: 10px; }
+        .app-icon { width: 45px; height: 45px;
+            background: linear-gradient(135deg, #1e88e5, #8e24aa);
+            border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 22px;
+            box-shadow: 0 4px 12px rgba(142, 36, 170, 0.3); flex-shrink: 0; }
+        .app-title h1 { font-size: 22px; font-weight: bold; }
+        .app-title span { font-size: 12px; color: #8a8a93; }
+
+        .card { background-color: #1c1c24; border-radius: 18px; padding: 16px;
+                width: 100%; display: flex; flex-direction: column; gap: 12px;
+                border: 1px solid #2a2a36; }
+
+        .input-box { width: 100%; background-color: #272733; border: 1px solid #3a3a4c;
+            border-radius: 10px; padding: 12px; color: #fff; font-size: 14px;
+            outline: none; direction: ltr; text-align: left;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease; }
+        .input-box::placeholder { color: #727280; }
+        .input-box.flash {
+            border-color: #0091ff;
+            box-shadow: 0 0 0 3px rgba(0,145,255,0.25);
+        }
+
+        .controls-row { display: flex; gap: 10px; }
+
+        .btn-paste { flex: 1; background-color: #0091ff; color: white; border: none;
+            border-radius: 10px; padding: 12px; font-weight: bold; font-size: 15px;
+            cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-paste:active { opacity: 0.8; transform: scale(0.98); }
+        .btn-paste i { font-size: 13px; }
+
+        .select-quality { flex: 1; background-color: #272733; color: #60a5fa;
+            border: 1px solid #3a3a4c; border-radius: 10px; padding: 12px;
+            font-weight: bold; font-size: 14px; outline: none;
+            text-align: center; cursor: pointer; }
+
+        .btn-download { width: 100%;
+            background: linear-gradient(90deg, #a855f7, #9333ea);
+            color: white; border: none; border-radius: 25px; padding: 14px;
+            font-weight: bold; font-size: 17px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); transition: 0.2s; }
+        .btn-download:active { transform: scale(0.98); }
+        .btn-download:disabled { background: #4a4a5a; cursor: not-allowed; box-shadow: none; }
+
+        .progress-container { display: none; flex-direction: column; gap: 8px;
+            margin-top: 4px; padding: 12px 14px;
+            background: #18181f; border-radius: 12px; border: 1px solid #2a2a36; }
+        .progress-container.show { display: flex; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); }
+                            to { opacity: 1; transform: translateY(0); } }
+
+        .progress-header { display: flex; justify-content: space-between;
+            align-items: center; font-size: 13px; }
+        .progress-header .label { color: #d1d1d6; font-weight: 600;
+            display: flex; align-items: center; gap: 6px; }
+        .progress-header .label i { color: #a855f7; font-size: 12px; }
+        .progress-header .percent { color: #fff; font-weight: bold;
+            font-variant-numeric: tabular-nums; font-size: 14px; }
+
+        .progress-bar { width: 100%; height: 10px; background: #272733;
+            border-radius: 6px; overflow: hidden; position: relative; }
+
+        .progress-fill { height: 100%; width: 0%;
+            background: linear-gradient(90deg, #a855f7 0%, #d946ef 40%, #ef4444 100%);
+            border-radius: 6px; transition: width 0.35s ease;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5),
+                        0 0 20px rgba(168, 85, 247, 0.3); }
+        .progress-fill::after { content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+            animation: shimmer 1.6s infinite; }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-container.indeterminate .progress-fill {
+            width: 40% !important;
+            animation: indeterminate 1.4s ease-in-out infinite;
+        }
+        @keyframes indeterminate {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(80%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .progress-info { display: flex; justify-content: space-between;
+            font-size: 11px; color: #8a8a93;
+            font-variant-numeric: tabular-nums; }
+        .progress-info span { display: flex; align-items: center; gap: 4px; }
+        .progress-info i { font-size: 10px; color: #60a5fa; }
+
+        .section-title { width: 100%; font-size: 15px; font-weight: bold;
+            color: #d1d1d6; margin-top: 5px; display: flex;
+            justify-content: space-between; align-items: center; }
+
+        .history-card { background-color: #1c1c24; border-radius: 18px;
+            padding: 16px; width: 100%; min-height: 200px; max-height: 320px;
+            overflow-y: auto; border: 1px solid #2a2a36;
+            display: flex; flex-direction: column; gap: 10px; }
+
+        .history-item { background-color: #272733; padding: 10px 12px;
+            border-radius: 8px; font-size: 13px; display: flex;
+            justify-content: space-between; align-items: center;
+            gap: 8px; transition: 0.15s; }
+        .history-item:hover { background-color: #2e2e3d; }
+
+        .history-name { max-width: 65%; white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; cursor: pointer; display: flex;
+            align-items: center; gap: 6px; flex: 1; }
+        .history-actions { display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0; }
+        .history-actions i { cursor: pointer; color: #a855f7; font-size: 13px;
+            padding: 4px; transition: 0.15s; }
+        .history-actions i:hover { color: #c084fc; }
+
+        .empty-history { color: #63636e; text-align: center;
+            margin: auto; font-size: 13px; }
+
+        .platforms-container { width: 100%; display: flex;
+            flex-direction: column; align-items: center; gap: 14px; margin-top: 10px; }
+        .platforms-title { font-size: 13px; color: #8a8a93; }
+
+        .icons-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+        .platform-box { display: flex; flex-direction: column; align-items: center;
+            gap: 6px; transition: transform 0.25s ease; }
+
+        .icon-btn { width: 46px; height: 46px; border-radius: 14px;
+            background-color: #1c1c24; display: flex; align-items: center;
+            justify-content: center; border: 1.5px solid #2a2a36;
+            transition: all 0.3s ease; position: relative; }
+        .icon-btn svg { width: 22px; height: 22px; fill: #b8b8c4;
+            transition: fill 0.3s ease; }
+
+        .platform-box[data-platform="x"] .icon-btn:hover svg { fill: #ffffff; }
+        .platform-box[data-platform="tiktok"] .icon-btn:hover svg { fill: #00f2fe; }
+        .platform-box[data-platform="instagram"] .icon-btn:hover svg { fill: #e1306c; }
+        .platform-box[data-platform="facebook"] .icon-btn:hover svg { fill: #1877f2; }
+        .platform-box[data-platform="youtube"] .icon-btn:hover svg { fill: #ff0000; }
+
+        .platform-box.active .icon-btn {
+            border-color: #ffffff;
+            background-color: #26262f;
+            box-shadow: 0 0 14px rgba(255,255,255,0.85),
+                        0 0 28px rgba(255,255,255,0.5),
+                        0 0 46px rgba(255,255,255,0.25),
+                        inset 0 0 10px rgba(255,255,255,0.15);
+            transform: scale(1.1);
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+        .platform-box.active .icon-btn svg { fill: #ffffff; filter: drop-shadow(0 0 4px rgba(255,255,255,0.8)); }
+        .platform-box.active span { color: #ffffff; font-weight: 600;
+            text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+        .platform-box.active { transform: translateY(-2px); }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 14px rgba(255,255,255,0.85),
+                                   0 0 28px rgba(255,255,255,0.5),
+                                   0 0 46px rgba(255,255,255,0.25),
+                                   inset 0 0 10px rgba(255,255,255,0.15); }
+            50% { box-shadow: 0 0 20px rgba(255,255,255,1),
+                              0 0 40px rgba(255,255,255,0.7),
+                              0 0 60px rgba(255,255,255,0.4),
+                              inset 0 0 14px rgba(255,255,255,0.25); }
+        }
+
+        .platform-box span { font-size: 10px; color: #727280; transition: 0.3s; }
+
+        .subscribe-banner {
+            width: 100%; display: flex; align-items: center; gap: 12px;
+            padding: 14px 16px; border-radius: 16px;
+            background: linear-gradient(135deg, #1a0f1e 0%, #1e1024 100%);
+            border: 1.5px solid #3a1a2c; text-decoration: none;
+            color: #fff; transition: all 0.3s ease; position: relative;
+            overflow: hidden; margin-top: 6px; }
+        .subscribe-banner::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,0,0,0.08), transparent);
+            animation: subShimmer 3s infinite; }
+        @keyframes subShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .subscribe-banner:active { transform: scale(0.98); }
+
+        .sub-logo { width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; box-shadow: 0 4px 14px rgba(255,0,0,0.4); }
+        .sub-logo svg { width: 24px; height: 24px; fill: #fff; }
+
+        .sub-content { flex: 1; display: flex; flex-direction: column;
+            gap: 3px; min-width: 0; }
+        .sub-title { font-size: 15px; font-weight: bold; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sub-subtitle { font-size: 11px; color: #a08e95; }
+
+        .sub-btn { background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: #fff; border: none; border-radius: 20px;
+            padding: 8px 16px; font-size: 13px; font-weight: bold;
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer; flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(255,0,0,0.4);
+            animation: bellPulse 2.2s ease-in-out infinite; }
+        .sub-btn i { font-size: 12px; }
+        @keyframes bellPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(255,0,0,0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(255,0,0,0.7); }
+        }
+
+        .footer { font-size: 13px; color: #0091ff; margin-top: 4px;
+            margin-bottom: 20px; font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 20px;
+            background: rgba(0,145,255,0.08); border: 1px solid rgba(0,145,255,0.2);
+            transition: all 0.25s ease; }
+        .footer:hover { background: rgba(0,145,255,0.18);
+            border-color: rgba(0,145,255,0.5); transform: translateY(-1px); }
+        .footer i { font-size: 12px; }
+
+        .spinner { display: inline-block; width: 16px; height: 16px;
+            border: 2.5px solid rgba(255,255,255,.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 0.9s linear infinite;
+            vertical-align: middle; margin-left: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .toast { position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            background: #272733; color: #fff; padding: 12px 20px;
+            border-radius: 12px; border: 1px solid #3a3a4c;
+            font-size: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+            opacity: 0; transition: all 0.3s ease; z-index: 9999;
+            max-width: 90vw; text-align: center; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #ef4444; }
+        .toast.info { border-color: #0091ff; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="app-icon">
+                <i class="fa-solid fa-download"></i>
+            </div>
+            <div class="app-title">
+                <h1>NexDrop Video</h1>
+                <span>v9.7 Pro Web Edition</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <input type="text" id="videoUrl" class="input-box"
+                   placeholder="ضع رابط الفيديو هنا..." autocomplete="off"
+                   inputmode="url" spellcheck="false">
+
+            <div class="controls-row">
+                <button class="btn-paste" type="button" onclick="pasteClipboard()">
+                    <i class="fa-solid fa-paste"></i> لصق
+                </button>
+                <select id="qualitySelect" class="select-quality">
+                    <option value="best">أفضل جودة</option>
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                    <option value="mp3">صوت MP3</option>
+                </select>
+            </div>
+
+            <button id="downloadBtn" class="btn-download" type="button" onclick="startDownload()">تحميل</button>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-header">
+                    <span class="label"><i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span id="progressLabel">جاري التحضير...</span>
+                    </span>
+                    <span class="percent" id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-info">
+                    <span><i class="fa-solid fa-database"></i>
+                        <span id="progressSize">-- / --</span></span>
+                    <span><i class="fa-solid fa-gauge-high"></i>
+                        <span id="progressSpeed">--</span></span>
+                    <span><i class="fa-regular fa-clock"></i>
+                        <span id="progressEta">--:--</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span>سجل التحميلات</span>
+            <i class="fa-solid fa-trash" style="cursor:pointer; font-size:12px; color:#727280;"
+               onclick="clearHistory()"></i>
+        </div>
+        <div class="history-card" id="historyList"></div>
+
+        <div class="platforms-container">
+            <span class="platforms-title">المنصات المدعومة</span>
+            <div class="icons-row">
+
+                <div class="platform-box" data-platform="x">
+                    <div class="icon-btn">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </div>
+                    <span>منصة X</span>
+                </div>
+
+                <div class="platform-box" data-platform="tiktok">
+                    <div class="icon-btn">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                        </svg>
+                    </div>
+                    <span>تيك توك</span>
+                </div>
+
+                <div class="platform-box" data-platform="instagram">
+                    <div class="icon-btn">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+                        </svg>
+                    </div>
+                    <span>انستجرام</span>
+                </div>
+
+                <div class="platform-box" data-platform="facebook">
+                    <div class="icon-btn">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                    </div>
+                    <span>فيسبوك</span>
+                </div>
+
+                <div class="platform-box" data-platform="youtube">
+                    <div class="icon-btn">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                    </div>
+                    <span>يوتيوب</span>
+                </div>
+
+            </div>
+        </div>
+
+        <a href="https://youtube.com/@heshamtechzone?si=Ejd22dIUbrtu-xFW"
+           target="_blank" rel="noopener" class="subscribe-banner">
+            <div class="sub-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+            </div>
+            <div class="sub-content">
+                <div class="sub-title">Hesham Tech Zone</div>
+                <div class="sub-subtitle">اشترك لمتابعة أحدث الأدوات والتطبيقات</div>
+            </div>
+            <div class="sub-btn">
+                <i class="fa-solid fa-bell"></i> اشترك
+            </div>
+        </a>
+
+        <a href="https://youtube.com/@heshamtechzone?si=Ejd22dIUbrtu-xFW"
+           target="_blank" rel="noopener" class="footer">
+            <i class="fa-solid fa-code"></i>
+            مدعوم من hesham tech zone
+        </a>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============ Toast ============
+        let toastTimer = null;
+        function showToast(msg, type = '', duration = 2800) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show ' + type;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { t.className = 'toast ' + type; }, duration);
+        }
+
+        // ============ Platform Detection ============
+        function detectPlatform(url) {
+            if (!url) return null;
+            const u = url.toLowerCase();
+            if (u.includes('tiktok')) return 'tiktok';
+            if (u.includes('x.com') || u.includes('twitter')) return 'x';
+            if (u.includes('instagram')) return 'instagram';
+            if (u.includes('facebook') || u.includes('fb.watch') || u.includes('fb.com')) return 'facebook';
+            if (u.includes('youtube') || u.includes('youtu.be')) return 'youtube';
+            return null;
+        }
+
+        function updatePlatformGlow() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const platform = detectPlatform(url);
+            document.querySelectorAll('.platform-box').forEach(box => {
+                if (platform && box.dataset.platform === platform) {
+                    box.classList.add('active');
+                } else {
+                    box.classList.remove('active');
+                }
+            });
+        }
+
+        // ============ Robust Paste (multi-layer fallback) ============
+        async function pasteClipboard() {
+            const input = document.getElementById('videoUrl');
+            const isSecure = window.isSecureContext;
+
+            // ---- Layer 1: Modern Clipboard API (needs HTTPS or localhost) ----
+            if (isSecure && navigator.clipboard && navigator.clipboard.readText) {
+                try {
+                    // Request permission gracefully if available
+                    if (navigator.permissions && navigator.permissions.query) {
+                        try {
+                            await navigator.permissions.query({ name: 'clipboard-read' });
+                        } catch (_) { /* بعض المتصفحات لا تدعم الاستعلام */ }
+                    }
+
+                    const text = await navigator.clipboard.readText();
+                    if (text && text.trim()) {
+                        input.value = text.trim();
+                        updatePlatformGlow();
+                        flashInput();
+                        showToast('✅ تم لصق الرابط', 'success', 1500);
+                        return;
+                    } else {
+                        showToast('📋 الحافظة فارغة', 'info', 1800);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Clipboard API failed:', err);
+                    // نكمل للطبقات التالية
+                }
+            }
+
+            // ---- Layer 2: execCommand('paste') fallback ----
+            try {
+                input.focus();
+                input.select();
+                // eslint-disable-next-line no-undef
+                const ok = document.execCommand && document.execCommand('paste');
+                if (ok && input.value.trim()) {
+                    updatePlatformGlow();
+                    flashInput();
+                    showToast('✅ تم لصق الرابط', 'success', 1500);
+                    return;
+                }
+            } catch (err) {
+                console.warn('execCommand paste failed:', err);
+            }
+
+            // ---- Layer 3: Focus + manual paste instructions ----
+            input.focus();
+            flashInput();
+
+            // لو الجهاز موبايل نرفع الكيبورد، ولو ديسكتوب نرشد المستخدم للاختصار
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                showToast('الصق الرابط يدوياً من قائمة "لصق" 👆', 'info', 3200);
+            } else {
+                showToast('اضغط Ctrl+V (أو ⌘V) للصق الرابط', 'info', 3200);
+            }
+        }
+
+        function flashInput() {
+            const input = document.getElementById('videoUrl');
+            input.classList.add('flash');
+            setTimeout(() => input.classList.remove('flash'), 900);
+        }
+
+        // ============ Progress ============
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressLabel = document.getElementById('progressLabel');
+        const progressSize = document.getElementById('progressSize');
+        const progressSpeed = document.getElementById('progressSpeed');
+        const progressEta = document.getElementById('progressEta');
+
+        function formatBytes(b) {
+            if (!b || b < 0) return '0 B';
+            if (b < 1024) return b.toFixed(0) + ' B';
+            if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+            if (b < 1024 * 1024 * 1024) return (b / 1024 / 1024).toFixed(1) + ' MB';
+            return (b / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+        }
+
+        function formatEta(sec) {
+            if (!sec || sec <= 0 || !isFinite(sec)) return '--:--';
+            sec = Math.round(sec);
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            if (m >= 60) {
+                const h = Math.floor(m / 60);
+                return `${h}:${String(m % 60).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function showProgress() {
+            progressContainer.classList.add('show');
+            progressContainer.classList.add('indeterminate');
+            progressFill.style.width = '40%';
+            progressPercent.textContent = '0%';
+            progressLabel.textContent = 'جاري التحضير...';
+            progressSize.textContent = '-- / --';
+            progressSpeed.textContent = '--';
+            progressEta.textContent = '--:--';
+        }
+
+        function hideProgress() {
+            progressContainer.classList.remove('show');
+        }
+
+        function renderProgress(data) {
+            const status = data.status || 'pending';
+
+            if (status === 'preparing' || status === 'pending') {
+                progressContainer.classList.add('indeterminate');
+                progressLabel.textContent = 'جاري التحضير...';
+                progressPercent.textContent = '0%';
+                return;
+            }
+
+            if (status === 'downloading') {
+                progressContainer.classList.remove('indeterminate');
+                const pct = Math.min(100, Math.max(0, data.percent || 0));
+                progressFill.style.width = pct + '%';
+                progressPercent.textContent = pct.toFixed(1) + '%';
+                progressLabel.textContent = 'جاري التحميل...';
+
+                if (data.total) {
+                    progressSize.textContent = `${formatBytes(data.downloaded)} / ${formatBytes(data.total)}`;
+                } else {
+                    progressSize.textContent = formatBytes(data.downloaded);
+                }
+
+                progressSpeed.textContent = data.speed ? formatBytes(data.speed) + '/s' : '--';
+                progressEta.textContent = formatEta(data.eta);
+                return;
+            }
+
+            if (status === 'processing') {
+                progressContainer.classList.remove('indeterminate');
+                progressFill.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressLabel.textContent = 'جاري المعالجة...';
+                return;
+            }
+
+            if (status === 'done') {
+                progressContainer.classList.remove('indeterminate');
+                progressFill.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressLabel.textContent = 'اكتمل التحميل ✓';
+                progressEta.textContent = '00:00';
+                return;
+            }
+        }
+
+        let pollInterval = null;
+
+        async function pollProgress(jobId) {
+            try {
+                const r = await fetch(`/progress/${jobId}`);
+                if (!r.ok) return;
+                const data = await r.json();
+                renderProgress(data);
+            } catch (e) { /* ignore */ }
+        }
+
+        // ============ Download ============
+        async function startDownload() {
+            const urlInput = document.getElementById('videoUrl');
+            const qualitySelect = document.getElementById('qualitySelect');
+            const btn = document.getElementById('downloadBtn');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showToast('يرجى إدخال رابط الفيديو أولاً!', 'error');
+                flashInput();
+                return;
+            }
+
+            const quality = qualitySelect.value === 'mp3' ? 'best' : qualitySelect.value;
+            const format = qualitySelect.value === 'mp3' ? 'mp3' : 'mp4';
+            const jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> جاري التحميل...';
+
+            showProgress();
+            pollInterval = setInterval(() => pollProgress(jobId), 500);
+            pollProgress(jobId);
+
+            try {
+                const extractUrl = `/extract?url=${encodeURIComponent(url)}&quality=${quality}&format=${format}&job_id=${jobId}`;
+                const response = await fetch(extractUrl);
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'فشل تحميل الفيديو من السيرفر');
+                }
+
+                renderProgress({ status: 'done', percent: 100 });
+                await new Promise(r => setTimeout(r, 400));
+
+                triggerFileDownload(data.file_id);
+                addToHistory(data.file_id, data.filename, url, data.size || 0);
+
+                urlInput.value = '';
+                updatePlatformGlow();
+                showToast('✅ تم التحميل بنجاح', 'success');
+                setTimeout(hideProgress, 1500);
+
+            } catch (err) {
+                showToast('حدث خطأ: ' + err.message, 'error');
+                setTimeout(hideProgress, 800);
+            } finally {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                btn.disabled = false;
+                btn.innerText = 'تحميل';
+            }
+        }
+
+        function triggerFileDownload(fileId) {
+            const a = document.createElement('a');
+            a.href = `/file/${fileId}`;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function openPreview(fileId) {
+            window.open(`/preview/${fileId}`, '_blank');
+        }
+
+        // ============ History ============
+        function formatSize(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+            return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+        }
+
+        function addToHistory(fileId, name, url, size) {
+            let history = JSON.parse(localStorage.getItem('nexdrop_history') || '[]');
+            history.unshift({
+                fileId, name, url, size: size || 0,
+                date: new Date().toLocaleString('ar-EG', {
+                    hour: '2-digit', minute: '2-digit',
+                    day: '2-digit', month: '2-digit'
+                })
+            });
+            if (history.length > 30) history.pop();
+            localStorage.setItem('nexdrop_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('nexdrop_history') || '[]');
+
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">لا توجد تحميلات سابقة</div>';
+                return;
+            }
+
+            historyList.innerHTML = '';
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+
+                const sizeText = item.size ? ` • ${formatSize(item.size)}` : '';
+                const isAudio = /\.(mp3|m4a|opus|ogg|wav)$/i.test(item.name || '');
+                const iconClass = isAudio ? 'fa-music' : 'fa-file-video';
+                const iconColor = isAudio ? '#60a5fa' : '#a855f7';
+
+                div.innerHTML = `
+                    <div class="history-name" onclick="openPreview('${item.fileId}')" title="اضغط للمعاينة">
+                        <i class="fa-solid ${iconClass}" style="color:${iconColor};"></i>
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(item.name)}</span>
+                    </div>
+                    <div class="history-actions">
+                        <small style="color:#727280;">${item.date}${sizeText}</small>
+                        <i class="fa-solid fa-eye" title="معاينة" onclick="openPreview('${item.fileId}')"></i>
+                        <i class="fa-solid fa-download" title="تنزيل" onclick="triggerFileDownload('${item.fileId}')"></i>
+                    </div>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, s => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[s]));
+        }
+
+        function clearHistory() {
+            if (confirm('هل تريد مسح السجل بالكامل؟')) {
+                localStorage.removeItem('nexdrop_history');
+                renderHistory();
+            }
+        }
+
+        // ============ Init ============
+        renderHistory();
+        updatePlatformGlow();
+
+        document.getElementById('videoUrl').addEventListener('input', updatePlatformGlow);
+        document.getElementById('videoUrl').addEventListener('paste', () => {
+            setTimeout(updatePlatformGlow, 30);
+        });
+        document.getElementById('videoUrl').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') startDownload();
+        });
+    </script>
+</body>
+</html>
